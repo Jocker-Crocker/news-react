@@ -4,28 +4,75 @@ import NewsBanner from "../../components/NewsBanner/NewsBanner";
 import style from "./styles.module.css";
 import { getNews } from "../../api/apiNews";
 import NewsList from "../../components/NewsList/NewsList";
+import Skeleton from "../../components/Skeleton/Skeleton";
+import Pagination from "../../components/Pagination/Pagination";
 
 const Main = () => {
-    const [news, setNews] = useState([])
+  const [news, setNews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 10;
+  const pageSize = 10;
 
+  const fetchNews = async (currentPage) => {
+    try {
+      setIsLoading(true);
+      const response = await getNews(currentPage, pageSize);
+      setNews(response.news);
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const response = await getNews();
-        setNews(response.news);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    fetchNews(currentPage);
+  }, [currentPage]);
 
-    fetchNews();
-  }, []);
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handlePageClick = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <main className={style.main}>
-      {news.length > 0 ? <NewsBanner item={news[0]} /> : null}
+      {news.length > 0 && !isLoading ? (
+        <NewsBanner item={news[0]} />
+      ) : (
+        <Skeleton type={"banner"} count={1} />
+      )}
 
-      <NewsList news={news} />
+      <Pagination
+        handlePreviousPage={handlePreviousPage}
+        handleNextPage={handleNextPage}
+        handlePageClick={handlePageClick}
+        totalPages={totalPages}
+        currentPage={currentPage}
+      />
+
+      {!isLoading ? (
+        <NewsList news={news} />
+      ) : (
+        <Skeleton type={"item"} count={10} />
+      )}
+
+      <Pagination
+        handlePreviousPage={handlePreviousPage}
+        handleNextPage={handleNextPage}
+        handlePageClick={handlePageClick}
+        totalPages={totalPages}
+        currentPage={currentPage}
+      />
     </main>
   );
 };
